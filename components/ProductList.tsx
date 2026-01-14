@@ -5,7 +5,7 @@ import Link from 'next/link'
 
 const fetcher = (url: string) => fetch(url).then(r => r.json())
 
-export default function ProductList() {
+export default function ProductList(): JSX.Element {
   const { data, error } = useSWR('/api/products', fetcher)
   if (error) return <div>Error loading products</div>
   if (!data) return <div>Loading...</div>

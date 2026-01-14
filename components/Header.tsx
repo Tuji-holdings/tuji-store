@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 
-export default function Header(){
+export default function Header(): JSX.Element {
   return (
     <header className="border-b bg-white">
       <div className="mx-auto flex max-w-6xl items-center justify-between p-4">

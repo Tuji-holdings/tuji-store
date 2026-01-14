@@ -3,7 +3,7 @@
 import Image from 'next/image'
 import Link from 'next/link'
 
-export default function Hero(){
+export default function Hero(): JSX.Element {
   return (
     <section className="rounded-lg bg-gradient-to-r from-[#ecfeff] to-[#eef2ff] p-8 flex flex-col gap-6 sm:flex-row items-center">
       <div className="flex-1">
