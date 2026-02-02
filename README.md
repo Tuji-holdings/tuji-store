@@ -1,4 +1,4 @@
-# Tuji Store
+# TujiSa Store
 
 A simple Next.js + Prisma + Stripe starter e-commerce app.
 
