@@ -1,22 +1,40 @@
-"use client"
+'use client'
 
-import useSWR from 'swr'
-import Link from 'next/link'
+import { useEffect, useState } from 'react'
+import ProductCard from './ProductCard'
 
-const fetcher = (url: string) => fetch(url).then(r => r.json())
+export default function ProductList() {
+  const [products, setProducts] = useState([])
+  const [loading, setLoading] = useState(true)
 
-export default function ProductList(): JSX.Element {
-  const { data, error } = useSWR('/api/products', fetcher)
-  if (error) return <div>Error loading products</div>
-  if (!data) return <div>Loading...</div>
+  useEffect(() => {
+    fetch('/api/products')
+      .then(res => res.json())
+      .then(data => {
+        setProducts(data)
+        setLoading(false)
+      })
+      .catch(err => {
+        console.error(err)
+        setLoading(false)
+      })
+  }, [])
+
+  if (loading) return <div className="text-tuji-gold text-center py-8">Loading products...</div>
+
+  if (products.length === 0) {
+    return (
+      <div className="text-center py-12">
+        <div className="text-tuji-light/60">No products available yet</div>
+        <div className="text-tuji-gold text-sm mt-2">Check back soon!</div>
+      </div>
+    )
+  }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-      {data.map((p: any) => (
-        <Link key={p.id} href={`/product/${p.slug}`} className="block rounded-lg border p-4 hover:shadow">
-          <div className="mb-2 font-medium">{p.name}</div>
-          <div className="text-sm text-gray-600">${(p.priceCents/100).toFixed(2)}</div>
-        </Link>
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      {products.map(product => (
+        <ProductCard key={product.id} {...product} />
       ))}
     </div>
   )

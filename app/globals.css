@@ -3,28 +3,79 @@
 @tailwind utilities;
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-  --brand: #0EA5A4;
-  --brand-dark: #0f766e;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --background: #0A0A0A;
+  --foreground: #FFFFFF;
+  --tuji-gold: #FFC107;
+  --tuji-dark: #1A1A1A;
+  --tuji-accent: #FFA500;
+  --tuji-light: #F5F5F5;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #0A0A0A;
+    --foreground: #FFFFFF;
   }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: 'Inter', Arial, Helvetica, sans-serif;
+}
+
+/* TujiSa Gold Accent Elements */
+.tuji-gold-text {
+  color: var(--tuji-gold);
+  font-weight: 600;
+}
+
+.tuji-gold-border {
+  border-color: var(--tuji-gold);
+}
+
+.tuji-gold-bg {
+  background-color: var(--tuji-gold);
+  color: var(--tuji-dark);
+}
+
+.tuji-gold-hover:hover {
+  background-color: var(--tuji-accent);
+  color: var(--tuji-dark);
+}
+
+/* Circuit lines animation */
+@keyframes circuit-pulse {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
+.circuit-line {
+  animation: circuit-pulse 3s ease-in-out infinite;
+}
+
+/* Premium button styles */
+.btn-tuji {
+  @apply px-6 py-3 rounded-lg font-semibold transition-all duration-300 flex items-center gap-2;
+}
+
+.btn-tuji-primary {
+  @apply btn-tuji tuji-gold-bg tuji-gold-hover;
+}
+
+.btn-tuji-secondary {
+  @apply btn-tuji border-2 border-tuji-gold text-tuji-gold hover:bg-tuji-gold hover:text-tuji-dark;
+}
+
+/* Gradient text */
+.tuji-gradient-text {
+  background: linear-gradient(135deg, var(--tuji-gold), var(--tuji-accent));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Cards */
+.tuji-card {
+  @apply bg-tuji-dark border border-tuji-gold/20 rounded-lg p-6 hover:border-tuji-gold/50 transition-all duration-300;
 }
