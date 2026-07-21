@@ -1,55 +1,98 @@
-Deployment steps — Vercel + GitHub + GoDaddy
+# TujiSa Store - Deployment Guide
 
-1) Overview ✅
-- We'll connect this GitHub repo to Vercel (recommended) and use a CI workflow to run tests, run Prisma migrations and the seed script, then allow Vercel to perform the build & deploy.
-- Final domain: **tujiholings.online** (GoDaddy) — we'll add DNS records to point to Vercel.
+## Environment Variables
 
-2) Required production secrets
-- DATABASE_URL — reachable production DB (Postgres is recommended; do NOT use SQLite in production)
-- NEXTAUTH_URL — https://tujiholings.online
-- NEXTAUTH_SECRET — a secure random value
-- STRIPE_SECRET_KEY and NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
-- (Optional) VERCEL_TOKEN, VERCEL_ORG_ID, VERCEL_PROJECT_ID — only if you want the workflow to trigger/wait for Vercel deploys
+### Required for Production
 
-Create these as GitHub repository secrets (Settings → Secrets → Actions) and in the Vercel Project Environment settings.
+```bash
+# Database (use PostgreSQL, not SQLite)
+DATABASE_URL="postgresql://user:password@host:5432/tuji_store"
 
-3) Create a production database
-- Recommended: use a managed Postgres (Supabase, Railway, Render, Neon, etc.).
-- Example: set DATABASE_URL to a Postgres URL and add that secret to GitHub and Vercel.
+# Authentication
+NEXTAUTH_SECRET="your-secret-key-here" # Generate: openssl rand -base64 32
+NEXTAUTH_URL="https://your-domain.com"
 
-4) GitHub Actions workflow
-- A workflow file is added at `.github/workflows/ci-deploy.yml`.
-- Behavior: on push to `main` (or manual dispatch): runs lint & build, runs `npx prisma migrate deploy`, runs `node prisma/seed.js`, then optionally triggers a Vercel deployment (if Vercel secrets present).
-- Ensure the `DATABASE_URL` secret points to your production DB before merging to `main`.
+# Stripe
+STRIPE_SECRET_KEY="sk_live_your_stripe_key"
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY="pk_live_your_stripe_key"
+STRIPE_WEBHOOK_SECRET="whsec_your_webhook_secret"
+```
 
-5) Connect Vercel to GitHub
-- In Vercel dashboard: "Import Project" → choose this GitHub repo → Configure
-- Build Command: `npm run build`
-- Output Directory: (leave blank; Next will handle output)
-- Add environment variables in Vercel (same ones as GitHub) for `Production` and `Preview` as needed
+## Deployment Steps
 
-6) Add custom domain in Vercel & update GoDaddy DNS
-- In Vercel: go to your Project → Settings → Domains → Add `tujiholings.online`
-- Vercel will show DNS instructions. For a GoDaddy-managed domain you can add the following records:
-  - A record — Host: @ → Value: 76.76.21.21 → TTL: default
-  - CNAME record — Host: www → Value: cname.vercel-dns.com → TTL: default
-- Optionally, add a TXT verification record if Vercel asks for it.
-- Wait until Vercel verifies the domain (it can take up to a few minutes depending on DNS propagation).
+### 1. Database Setup
 
-7) Final checks after deploy
-- Confirm the site loads on `https://tujiholings.online`
-- Sign in to `/admin` using `admin@tuji.local` / `password123` (seeded user) — change password and create a proper admin account immediately
-- Verify Stripe endpoints in `app/api/webhooks/stripe/route.ts` and update live keys in Vercel (do not publish secret keys in the repo)
-- Run a quick purchase flow with test Stripe keys in place
+- Create PostgreSQL database (Vercel Postgres, Railway, Supabase, etc.)
+- Update `DATABASE_URL` with your connection string
+- Run migrations:
+  ```bash
+  npx prisma migrate deploy
+  npx prisma db seed
+  ```
 
-8) Rollback plan
-- If a migration fails, restore DB from backup or use the DB provider's rollback features. Don't run destructive migrations without a backup.
+### 2. Vercel Deployment
 
-9) Notes & tips
-- Do not put production secrets in the repo. Use GitHub Secrets and Vercel Environment Variables.
-- For zero-downtime DB migrations, consider non-blocking additive migrations and background jobs for data backfills.
+1. Connect GitHub repo to Vercel
+2. Add environment variables in Project Settings
+3. Deploy (automatic on push to main)
 
-If you want, I'll:
-- create a `chore/ci-deploy` branch, commit the workflow & docs, and open a PR for review ✅
-- prepare a short "Release notes" entry summarizing the deployment changes ✅
-- walk you through adding the DNS records in your GoDaddy account (I can provide step-by-step UI instructions)
+### 3. Stripe Setup
+
+1. Create Stripe account
+2. Get live API keys from Dashboard
+3. Set up webhook for `/api/webhooks/stripe`
+4. Add webhook secret to environment
+
+### 4. GitHub Secrets
+
+Add to repository Settings → Secrets & Variables → Actions:
+- `DATABASE_URL`
+- `NEXTAUTH_SECRET`
+- `STRIPE_SECRET_KEY`
+- `VERCEL_TOKEN` (optional, for automated deploy)
+- `VERCEL_ORG_ID` (optional)
+- `VERCEL_PROJECT_ID` (optional)
+
+## First Launch Checklist
+
+- [ ] PostgreSQL database created and connected
+- [ ] Prisma migrations run (`npx prisma migrate deploy`)
+- [ ] Database seeded with admin user
+- [ ] Stripe account setup with live keys
+- [ ] Environment variables configured in Vercel
+- [ ] Domain connected to Vercel
+- [ ] SSL certificate auto-provisioned
+- [ ] Admin login tested (`admin@tuji.local` / `password123`)
+- [ ] Product can be added to cart
+- [ ] Checkout flow tested with test Stripe card
+- [ ] Admin password changed from default
+- [ ] GitHub Actions workflow triggered successfully
+
+## Post-Launch
+
+- Monitor Vercel Analytics
+- Set up error tracking (Sentry, LogRocket, etc.)
+- Configure email notifications for orders
+- Add real products to database
+- Update branding and content
+- Set up backup strategy
+
+## Troubleshooting
+
+### Build fails: "Cannot find module"
+- Run `npm ci` locally to verify
+- Check all dependencies in `package.json`
+
+### Database connection error
+- Verify `DATABASE_URL` format
+- Test connection string locally
+- Check IP allowlist on database provider
+
+### Stripe not working
+- Verify API keys are correct
+- Check webhook endpoint is accessible
+- Test with Stripe test cards
+
+### Admin login failing
+- Run `npx prisma db seed` to recreate admin user
+- Check `NEXTAUTH_SECRET` is set correctly
