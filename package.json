@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "postinstall": "npx prisma generate",
+    "vercel-build": "npm run build"
   },
   "dependencies": {
     "@prisma/client": "^5.7.0",
@@ -19,8 +21,8 @@
     "swr": "^2.3.8"
   },
   "devDependencies": {
-    "@types/node": "25.0.3",
-    "@types/react": "19.2.7",
+    "@types-node": "25.0.3",
+    "@types-react": "19.2.7",
     "autoprefixer": "^10.4.16",
     "postcss": "^8.4.31",
     "prisma": "^5.7.0",
