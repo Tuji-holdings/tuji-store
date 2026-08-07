@@ -1,12 +1,20 @@
-export default async function Products() {
+'use client'
+
+import Header from '@/components/Header'
+import ProductList from '@/components/ProductList'
+
+export default function ProductsPage() {
   return (
-    <div className="min-h-screen bg-background">
-      <div className="mx-auto max-w-7xl px-8 py-12">
-        <h1 className="text-4xl font-bold text-tuji-light mb-8">All <span className="tuji-gradient-text">TujiSa</span> Products</h1>
-        <div className="text-center py-12">
-          <div className="text-tuji-light/60">Loading products...</div>
+    <>
+      <Header />
+      <main className="min-h-screen bg-background py-12">
+        <div className="mx-auto max-w-7xl px-8">
+          <h1 className="text-4xl font-bold text-tuji-light mb-12 text-center">
+            All <span className="tuji-gradient-text">Products</span>
+          </h1>
+          <ProductList />
         </div>
-      </div>
-    </div>
+      </main>
+    </>
   )
 }

@@ -1,39 +1,34 @@
 'use client'
 
-import Image from 'next/image'
-import Link from 'next/link'
+import AddToCart from './AddToCart'
 
-interface ProductCardProps {
-  id: string
-  name: string
-  slug: string
-  description?: string
-  priceCents: number
-  images?: string[]
-}
-
-export default function ProductCard({ id, name, slug, description, priceCents, images }: ProductCardProps) {
-  const imageUrl = images && images.length > 0 ? images[0] : '/placeholder.png'
-  const price = (priceCents / 100).toFixed(2)
+export default function ProductCard({ id, name, description, images, variants }: any) {
+  const mainVariant = variants?.[0]
+  const price = mainVariant?.priceCents ? (mainVariant.priceCents / 100).toFixed(2) : '0.00'
+  const imageUrl = images?.[0] || 'https://via.placeholder.com/300x300?text=Product'
 
   return (
-    <Link href={`/product/${slug}`}>
-      <div className="tuji-card cursor-pointer group">
-        <div className="relative mb-4 overflow-hidden rounded-lg h-48 bg-tuji-dark">
-          <Image
-            src={imageUrl}
-            alt={name}
-            fill
-            className="object-cover group-hover:scale-110 transition-transform duration-300"
-          />
-        </div>
-        <h3 className="text-lg font-semibold text-tuji-light group-hover:text-tuji-gold transition mb-2">{name}</h3>
-        {description && <p className="text-tuji-light/60 text-sm mb-4 line-clamp-2">{description}</p>}
-        <div className="flex items-center justify-between">
-          <span className="text-2xl tuji-gradient-text font-bold">${price}</span>
-          <span className="text-tuji-gold text-sm font-semibold group-hover:translate-x-1 transition">→</span>
+    <div className="tuji-card">
+      <div className="relative w-full h-48 mb-4 bg-background rounded overflow-hidden">
+        <img
+          src={imageUrl}
+          alt={name}
+          className="w-full h-full object-cover hover:scale-110 transition-transform duration-300"
+        />
+        <div className="absolute top-3 right-3 bg-tuji-gold text-tuji-dark px-3 py-1 rounded-full font-semibold">
+          ${price}
         </div>
       </div>
-    </Link>
+
+      <h3 className="text-lg font-semibold text-tuji-light mb-2">{name}</h3>
+      <p className="text-tuji-light/60 text-sm mb-4 line-clamp-2">{description}</p>
+
+      {mainVariant && (
+        <>
+          <div className="text-xs text-tuji-light/50 mb-4">SKU: {mainVariant.sku}</div>
+          <AddToCart product={{ id, name }} variant={mainVariant} />
+        </>
+      )}
+    </div>
   )
 }

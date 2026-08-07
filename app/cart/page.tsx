@@ -1,15 +1,18 @@
-export default async function Cart() {
+'use client'
+
+import Header from '@/components/Header'
+import Cart from '@/components/Cart'
+
+export default function CartPage() {
   return (
-    <div className="min-h-screen bg-background">
-      <div className="mx-auto max-w-7xl px-8 py-12">
-        <h1 className="text-4xl font-bold text-tuji-light mb-8">Your <span className="tuji-gradient-text">TujiSa</span> Cart</h1>
-        <div className="text-center py-12">
-          <div className="text-tuji-light/60 mb-4">Your cart is empty</div>
-          <a href="/" className="btn-tuji-primary inline-flex">
-            Continue Shopping
-          </a>
+    <>
+      <Header />
+      <main className="min-h-screen bg-background py-12">
+        <div className="mx-auto max-w-2xl px-8">
+          <h1 className="text-4xl font-bold text-tuji-light mb-8">Shopping Cart</h1>
+          <Cart />
         </div>
-      </div>
-    </div>
+      </main>
+    </>
   )
 }
