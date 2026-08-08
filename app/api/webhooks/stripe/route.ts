@@ -5,20 +5,19 @@ import { NextResponse } from 'next/server'
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', { apiVersion: '2024-11-15' })
 
 export async function POST(req: Request) {
-  const sig = req.headers.get('stripe-signature') || ''
-  const text = await req.text()
+  if (!process.env.STRIPE_SECRET_KEY || !process.env.STRIPE_WEBHOOK_SECRET) {
+    return NextResponse.json({ received: false }, { status: 503 })
+  }
 
-  // If webhook secret is not set, try to parse without verification (dev/test only)
+  const signature = req.headers.get('stripe-signature')
+  if (!signature) return NextResponse.json({ received: false }, { status: 400 })
+
+  const text = await req.text()
   let event: Stripe.Event
   try {
-    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET
-    if (webhookSecret) {
-      event = stripe.webhooks.constructEvent(text, sig, webhookSecret)
-    } else {
-      event = JSON.parse(text)
-    }
-  } catch (err) {
-    console.error('Webhook signature verification failed.', err)
+    event = stripe.webhooks.constructEvent(text, signature, process.env.STRIPE_WEBHOOK_SECRET)
+  } catch (error) {
+    console.error('Webhook signature verification failed.', error)
     return NextResponse.json({ received: false }, { status: 400 })
   }
 
@@ -26,12 +25,19 @@ export async function POST(req: Request) {
     const session = event.data.object as Stripe.Checkout.Session
     const orderId = session.metadata?.orderId
     if (orderId) {
-      // mark order as paid and reduce inventory
-      const order = await prisma.order.update({ where: { id: orderId }, data: { status: 'PAID' } })
-
-      const orderItems = await prisma.orderItem.findMany({ where: { orderId: order.id } })
-      for (const it of orderItems) {
-        await prisma.productVariant.update({ where: { id: it.variantId }, data: { inventory: { decrement: it.quantity } } })
+      const order = await prisma.order.findUnique({ where: { id: orderId } })
+      if (order && order.status !== 'PAID') {
+        const items = await prisma.orderItem.findMany({ where: { orderId } })
+        await prisma.$transaction(async (tx) => {
+          for (const item of items) {
+            const updated = await tx.productVariant.updateMany({
+              where: { id: item.variantId, inventory: { gte: item.quantity } },
+              data: { inventory: { decrement: item.quantity } }
+            })
+            if (updated.count !== 1) throw new Error(`Insufficient inventory for ${item.variantId}`)
+          }
+          await tx.order.update({ where: { id: orderId }, data: { status: 'PAID' } })
+        })
       }
     }
   }

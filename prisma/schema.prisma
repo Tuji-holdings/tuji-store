@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -24,7 +24,7 @@ model Product {
   slug        String           @unique
   description String?
   priceCents  Int
-  images      String[]         @default("")
+  images      String[]
   createdAt   DateTime         @default(now())
   variants    ProductVariant[]
 }
@@ -52,13 +52,13 @@ model CartItem {
 }
 
 model Order {
-  id         String      @id @default(cuid())
-  user       User        @relation(fields: [userId], references: [id])
-  userId     String
+  id         String          @id @default(cuid())
+  user       User?           @relation(fields: [userId], references: [id])
+  userId     String?
   totalCents Int
-  status     String      @default("PENDING")
+  status     String          @default("PENDING")
   items      OrderItem[]
-  createdAt  DateTime    @default(now())
+  createdAt  DateTime        @default(now())
 }
 
 model OrderItem {
