@@ -1,7 +1,9 @@
-name: CI & Deploy (build → migrate → seed → deploy)
+name: CI
 
 on:
   push:
+    branches: ["main"]
+  pull_request:
     branches: ["main"]
   workflow_dispatch:
 
@@ -13,51 +15,35 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '20'
           cache: 'npm'
-      - name: Install deps
+      - name: Install dependencies
         run: npm ci
-      - name: Lint
-        run: npm run lint
+      - name: Generate Prisma client
+        run: npx prisma generate
+      - name: Type check
+        run: npx tsc --noEmit
       - name: Build
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
+          NEXTAUTH_URL: ${{ secrets.NEXTAUTH_URL }}
+          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
         run: npm run build
 
-  migrate-and-seed:
-    name: Migrate and Seed DB (production)
+  migrate:
+    name: Migrate production database
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: test-and-build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '18'
-      - name: Install deps
-        run: npm ci
-      - name: Run Prisma migrations
+          node-version: '20'
+          cache: 'npm'
+      - run: npm ci
+      - name: Deploy Prisma migrations
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
-        run: npx prisma migrate deploy --schema=prisma/schema.prisma
-      - name: Seed database
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-        run: node prisma/seed.js
-
-  trigger-vercel-deploy:
-    name: Trigger/Wait for Vercel deployment (optional)
-    needs: migrate-and-seed
-    runs-on: ubuntu-latest
-    if: ${{ secrets.VERCEL_TOKEN != '' && secrets.VERCEL_PROJECT_ID != '' }}
-    steps:
-      - uses: actions/checkout@v4
-      - name: Trigger Vercel deployment
-        uses: amondnet/vercel-action@v20
-        with:
-          vercel-token: ${{ secrets.VERCEL_TOKEN }}
-          vercel-args: '--prod --confirm'
-          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
-          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-
-# Notes:
-# - Set Secrets in GitHub repo: DATABASE_URL, VERCEL_TOKEN, VERCEL_PROJECT_ID, VERCEL_ORG_ID, NEXTAUTH_SECRET, STRIPE keys, etc.
-# - If you prefer Vercel's GitHub Integration (recommended), connect the repo to Vercel and it will auto-deploy on push to main.
-# - This workflow ensures migrations and seed run before we trigger / wait for a Vercel deployment.
+        run: npx prisma migrate deploy
