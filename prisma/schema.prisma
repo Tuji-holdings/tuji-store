@@ -24,7 +24,7 @@ model Product {
   slug        String           @unique
   description String?
   priceCents  Int
-  images      String[]         @default([])
+  images      String[]         @default("")
   createdAt   DateTime         @default(now())
   variants    ProductVariant[]
 }
